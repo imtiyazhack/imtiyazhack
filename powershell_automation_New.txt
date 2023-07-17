@@ -1,0 +1,19 @@
+# Replace these variables with the path to your PowerShell script and the specific user credentials
+$scriptPath = "C:\path\to\your\script.ps1"
+$domain = "your_domain_name"
+$username = "your_username"
+$password = "your_password"   # This should be a plain text password, not a SecureString
+
+# Convert the plain-text password to a secure string
+$securePassword = ConvertTo-SecureString $password -AsPlainText -Force
+
+# Create a PSCredential object with the username and the secure password
+$credential = New-Object System.Management.Automation.PSCredential ($username, $securePassword)
+
+# Start a new PowerShell process and execute the script with the provided credentials
+try {
+    Start-Process -FilePath "powershell.exe" -ArgumentList "-File '$scriptPath'" -Credential $credential -Wait
+    Write-Host "PowerShell script executed successfully as user: $domain\$username"
+} catch {
+    Write-Host "Error executing PowerShell script: $_.Exception.Message"
+}
