@@ -1,0 +1,36 @@
+# Active Directory credentials
+$UserName = 'user1'
+$Password = 'P@ssw0rd'
+$Domain = $env:USERDOMAIN
+
+# Path to your PowerShell script on your computer
+$ScriptPath = 'C:\path\to\your\script.ps1'
+
+# Add-Type to access System.DirectoryServices.AccountManagement namespace
+Add-Type -AssemblyName System.DirectoryServices.AccountManagement
+
+# Validate Active Directory credentials
+$ct = [System.DirectoryServices.AccountManagement.ContextType]::Domain
+$pc = New-Object System.DirectoryServices.AccountManagement.PrincipalContext $ct, $Domain
+$isValidCredentials = $pc.ValidateCredentials($UserName, $Password)
+
+if ($isValidCredentials) {
+    # Credentials are valid, execute the PowerShell script with the authenticated user's credentials
+
+    # Convert the plain-text password to a secure string
+    $securePassword = ConvertTo-SecureString $Password -AsPlainText -Force
+
+    # Create a PSCredential object with the username and the secure password
+    $credential = New-Object System.Management.Automation.PSCredential ($UserName, $securePassword)
+
+    try {
+        # Start a new PowerShell process and execute the script with the provided credentials
+        Start-Process -FilePath "powershell.exe" -ArgumentList "-File '$ScriptPath'" -Credential $credential -Wait
+        Write-Host "PowerShell script executed successfully as user: $Domain\$UserName"
+    } catch {
+        Write-Host "Error executing PowerShell script: $_.Exception.Message"
+    }
+}
+else {
+    Write-Host "Authentication failed. Please check the provided Active Directory credentials."
+}
